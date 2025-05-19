@@ -3,6 +3,7 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Image;
+import java.awt.MouseInfo;
 import java.awt.Point;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
@@ -11,11 +12,8 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.awt.image.BufferedImage;
-import java.io.IOException;
-import java.net.URL;
+import java.util.ArrayList;
 import java.util.Random;
-import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -23,23 +21,24 @@ import javax.swing.Timer;
 
 public class Frame extends JPanel implements ActionListener, MouseListener, KeyListener {
 	private static final Random random = new Random();
-	public static boolean debugging = true;
+	public static boolean debugging = false;
 	public static boolean simpleMovement = true;
 	//Timer related variables
-	BufferedImage background1;
-	BufferedImage background2;
-	BufferedImage background3;
+	Background background;
 	long ellapseTime = 0;
 	Font timeFont = new Font("Courier", Font.BOLD, 70);
 	Font myFont = new Font("Courier", Font.BOLD, 40);
 
-	int width = 1400;
-	int height = 800;	
-
+	int width = 1422;
+	int height = 800;
+	
+	private ArrayList<Life> lives = new ArrayList<>();
 
 	public void paint(Graphics g) {
 		super.paintComponent(g);
-		g.drawImage(background1, 0, 0, null);
+		background.draw(g);
+		drawLives(g);
+		System.out.println(MouseInfo.getPointerInfo().getLocation());
 	}
 	
 	public static void main(String[] arg) {
@@ -47,19 +46,7 @@ public class Frame extends JPanel implements ActionListener, MouseListener, KeyL
 	}
 	
 	public Frame() {
-		try{
-			URL imageURL = getClass().getResource("/imgs/defaultBG.png");
-			System.out.println(imageURL);
-			background1 = ImageIO.read(imageURL);
-			/* 
-			imageURL = getClass().getResource("/imgs/bgdefeat.png");
-			background2 = ImageIO.read(imageURL);
-			imageURL = getClass().getResource("/imgs/bgvictory.png");
-			background3= ImageIO.read(imageURL);
-			*/
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		background = new Background("bigBG.png");
 		
 		JFrame f = new JFrame("Fruit Ninja");
 		f.setSize(new Dimension(width, height));
@@ -68,6 +55,10 @@ public class Frame extends JPanel implements ActionListener, MouseListener, KeyL
 		f.setResizable(false);
 		f.addMouseListener(this);
 		f.addKeyListener(this);
+
+		for(int i = 1; i <= 3; i++){
+			lives.add(new Life(i));
+		}
 			
 		setCursor(Toolkit.getDefaultToolkit().createCustomCursor(
 				new ImageIcon("cursor.png").getImage().getScaledInstance(46, 40, Image.SCALE_DEFAULT),
@@ -117,7 +108,11 @@ public class Frame extends JPanel implements ActionListener, MouseListener, KeyL
 	
 	@Override
 	public void keyPressed(KeyEvent arg0) {
-		// 38 = up, 40 = down, 37 = left, 39 = right
+		int keyCode = arg0.getKeyCode();
+		if(keyCode == 82){
+			resetLives();
+		}
+		// 38 = up, 40 = down, 37 = left, 39 = right, 82 = r
 	}
 
 	@Override
@@ -128,5 +123,17 @@ public class Frame extends JPanel implements ActionListener, MouseListener, KeyL
 	public void keyTyped(KeyEvent arg0) {
 		// TODO Auto-generated method stub
 		
+	}
+
+	public void drawLives(Graphics g){
+		for(Life life : lives){
+			life.paint(g);
+		}
+	}
+
+	public void resetLives(){
+		for(Life life : lives){
+			life.update();
+		}
 	}
 }

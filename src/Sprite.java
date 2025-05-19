@@ -16,8 +16,8 @@ public class Sprite{
 	int width, height;
 	int x, y;						//position of the object
 	int vx, vy;						//movement variables
-	double scaleWidth = 2.0;		//change to scale image
-	double scaleHeight = 2.0; 		//change to scale image
+	double scaleWidth = 1.0;		//change to scale image
+	double scaleHeight = 1.0; 		//change to scale image
 
 	public Sprite(int x, int y, int vx, int vy, int width, int height) {
 		//Initialize variables
@@ -74,7 +74,7 @@ public class Sprite{
 		tx.scale(scaleWidth, scaleHeight);
 	}
 
-    protected BufferedImage loadImage(String path) {
+    protected static BufferedImage loadImage(String path) {
         BufferedImage img = null;
         try {
             URL imageURL = Sprite.class.getResource(path);
