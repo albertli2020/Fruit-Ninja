@@ -33,12 +33,21 @@ public class Frame extends JPanel implements ActionListener, MouseListener, KeyL
 	int height = 800;
 	
 	private ArrayList<Life> lives = new ArrayList<>();
+	private ArrayList<Fruit> fruits = new ArrayList<>();
+	private ArrayList<SplitFruit> fruitRemnants = new ArrayList<>();
+	private ArrayList<Trail> trail = new ArrayList<>();
 
 	public void paint(Graphics g) {
+		Point mouseLoc = MouseInfo.getPointerInfo().getLocation();
 		super.paintComponent(g);
+		//Trail t = trail.get(trail.size() - 1);
+		//trail.add(new Trail(mouseLoc.x, mouseLoc.y, t.getX(), t.getY()));
 		background.draw(g);
 		drawLives(g);
-		System.out.println(MouseInfo.getPointerInfo().getLocation());
+		drawFruits(g);
+		//drawTrail(g);
+		//System.out.println(trail.size());
+		if(debugging) System.out.println(mouseLoc);
 	}
 	
 	public static void main(String[] arg) {
@@ -46,8 +55,7 @@ public class Frame extends JPanel implements ActionListener, MouseListener, KeyL
 	}
 	
 	public Frame() {
-		background = new Background("bigBG.png");
-		
+		background = new Background("default.png");
 		JFrame f = new JFrame("Fruit Ninja");
 		f.setSize(new Dimension(width, height));
 		f.setBackground(Color.white);
@@ -59,7 +67,13 @@ public class Frame extends JPanel implements ActionListener, MouseListener, KeyL
 		for(int i = 1; i <= 3; i++){
 			lives.add(new Life(i));
 		}
-			
+
+		for(int i = 1; i <= 20; i++){
+			fruits.add(new Fruit());
+		}
+		
+		//trail.add(new Trail(MouseInfo.getPointerInfo().getLocation().x, MouseInfo.getPointerInfo().getLocation().y));
+
 		setCursor(Toolkit.getDefaultToolkit().createCustomCursor(
 				new ImageIcon("cursor.png").getImage().getScaledInstance(46, 40, Image.SCALE_DEFAULT),
 				new Point(0,0),"custom cursor"));	
@@ -131,9 +145,23 @@ public class Frame extends JPanel implements ActionListener, MouseListener, KeyL
 		}
 	}
 
+	public void drawFruits(Graphics g){
+		for(Fruit fruit : fruits){
+			fruit.paint(g);
+		}
+	}
+
 	public void resetLives(){
 		for(Life life : lives){
 			life.update();
+		}
+	}
+
+	public void drawTrail(Graphics g){
+		for(Trail t : trail){
+			if(t != null){
+				t.paint(g);
+			}
 		}
 	}
 }

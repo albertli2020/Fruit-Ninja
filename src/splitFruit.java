@@ -3,7 +3,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Random;
 
-public class splitFruit extends Sprite{
+public class SplitFruit extends Sprite{
     private static final Random random = new Random();
     private static final String splitFruitDir = "src/imgs/fruits";
     private static final File directory = new File(splitFruitDir);
@@ -11,7 +11,7 @@ public class splitFruit extends Sprite{
     private static ArrayList<BufferedImage> fruitImages = new ArrayList<>();
 
 
-    public splitFruit(){
+    public SplitFruit(){
         super(0, 0,0 ,0, 0, 0);
     }
 }

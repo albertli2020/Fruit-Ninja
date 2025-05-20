@@ -10,6 +10,7 @@ import javax.imageio.ImageIO;
 
 
 public class Sprite{
+	protected final double GRAVITY = 0;
 	protected BufferedImage sprite; 	
 	protected AffineTransform tx;
 	int dir = 0; 					//0-forward, 1-backward, 2-left, 3-right
