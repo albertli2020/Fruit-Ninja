@@ -16,6 +16,7 @@ public class Life extends Sprite{
 
     public Life(int lifeNum){
         super(970 + (int) (Math.pow(1.3, (lifeNum - 1)) * 150), 30, 0, 0, 40, 40);
+        super.fixed();
         counter = true;
         filled = false;
         sprite = blankLife;

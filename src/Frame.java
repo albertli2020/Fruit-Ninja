@@ -47,7 +47,7 @@ public class Frame extends JPanel implements ActionListener, MouseListener, KeyL
 		drawFruits(g);
 		//drawTrail(g);
 		//System.out.println(trail.size());
-		if(debugging) System.out.println(mouseLoc);
+		System.out.println(mouseLoc);
 	}
 	
 	public static void main(String[] arg) {
@@ -68,8 +68,13 @@ public class Frame extends JPanel implements ActionListener, MouseListener, KeyL
 			lives.add(new Life(i));
 		}
 
-		for(int i = 1; i <= 20; i++){
-			fruits.add(new Fruit());
+		for(int i = 1; i <= 10; i++){
+			int x = random.nextInt(100, 1200);
+			int y = random.nextInt(800, 850);
+
+			int vx = random.nextInt(-6, 6);
+			int vy = random.nextInt(-23, -18);
+			fruits.add(new Fruit(x, y, vx, vy));
 		}
 		
 		//trail.add(new Trail(MouseInfo.getPointerInfo().getLocation().x, MouseInfo.getPointerInfo().getLocation().y));
@@ -125,6 +130,7 @@ public class Frame extends JPanel implements ActionListener, MouseListener, KeyL
 		int keyCode = arg0.getKeyCode();
 		if(keyCode == 82){
 			resetLives();
+			resetFruits();
 		}
 		// 38 = up, 40 = down, 37 = left, 39 = right, 82 = r
 	}
@@ -143,6 +149,19 @@ public class Frame extends JPanel implements ActionListener, MouseListener, KeyL
 		for(Life life : lives){
 			life.paint(g);
 		}
+	}
+
+	public void resetFruits(){
+		fruits.clear();
+		for(int i = 1; i <= 10; i++){
+			int x = random.nextInt(100, 1200);
+			int y = random.nextInt(800, 850);
+
+			int vx = random.nextInt(-6, 6);
+			int vy = random.nextInt(-20, -15);
+			fruits.add(new Fruit(x, y, vx, vy));
+		}
+
 	}
 
 	public void drawFruits(Graphics g){

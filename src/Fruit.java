@@ -31,13 +31,10 @@ public class Fruit extends Sprite{
         }
     }
 
-    public Fruit(){
-        super(0, 0, 0, 0, 0, 0);
+    public Fruit(int x, int y, int vx, int vy){
+        super(x, y, vx, vy, 0, 0);
         //sprite = fruitImages.get(random.nextInt(0, fruitImages.size()));
         sprite = resizeFruitHeight(fruitImages.get(random.nextInt(0, fruitImages.size())), 75);
-
-        this.x = random.nextInt(100, 900);
-        this.y = random.nextInt(100, 600);
 
         //fruit shoudl have projectile motion, vx stays constant, vy changes with accleration from gravity, initial vy should be negative
 
@@ -80,7 +77,9 @@ public class Fruit extends Sprite{
     @Override
     public void paint(Graphics g) {
 		Graphics2D g2 = (Graphics2D) g;
-		
+		if(x <= -20 || x >= 1430){
+            vx *= -1;
+        }
 		super.paint(g);
 	}
 

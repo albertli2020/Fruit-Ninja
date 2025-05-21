@@ -10,15 +10,18 @@ import javax.imageio.ImageIO;
 
 
 public class Sprite{
-	protected final double GRAVITY = 0;
+	protected final double GRAVITY = 1;
 	protected BufferedImage sprite; 	
 	protected AffineTransform tx;
+
+	boolean fixed;
 	int dir = 0; 					//0-forward, 1-backward, 2-left, 3-right
 	int width, height;
 	int x, y;						//position of the object
 	int vx, vy;						//movement variables
 	double scaleWidth = 1.0;		//change to scale image
 	double scaleHeight = 1.0; 		//change to scale image
+	int cntr;
 
 	public Sprite(int x, int y, int vx, int vy, int width, int height) {
 		//Initialize variables
@@ -28,7 +31,7 @@ public class Sprite{
 		this.y = y;
 		this.vx = vx;
 		this.vy = vy;
-		
+		cntr = 0;
 		tx = AffineTransform.getTranslateInstance(0, 0);
 		
 		init(x, y); //Initialize the transform
@@ -39,7 +42,12 @@ public class Sprite{
 
         //update pos
 		x+=vx;
-		y+=vy;	
+		y+=vy;
+		cntr ++;
+		if(cntr % 3 == 0){
+			if(!fixed) vy += GRAVITY;
+		}
+
 		init(x,y);
 
         //draw image
@@ -109,4 +117,8 @@ public class Sprite{
 		return tempImage;
 	}
     */
+
+	public void fixed(){
+		fixed = true;
+	}
 }
