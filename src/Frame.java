@@ -21,8 +21,13 @@ import javax.swing.Timer;
 
 public class Frame extends JPanel implements ActionListener, MouseListener, KeyListener {
 	private static final Random random = new Random();
-	public static boolean debugging = false;
+	public static boolean debugging = true;
 	public static boolean simpleMovement = true;
+
+	private int lastX = 0;
+    private int lastY = 0;
+
+
 	//Timer related variables
 	Background background;
 	long ellapseTime = 0;
@@ -31,13 +36,19 @@ public class Frame extends JPanel implements ActionListener, MouseListener, KeyL
 
 	int width = 1422;
 	int height = 800;
+	int frame;
 	
 	private ArrayList<Life> lives = new ArrayList<>();
 	private ArrayList<Fruit> fruits = new ArrayList<>();
 	private ArrayList<SplitFruit> fruitRemnants = new ArrayList<>();
-	private ArrayList<Trail> trail = new ArrayList<>();
+	private ArrayList<Trail> trails = new ArrayList<>();
+	private ArrayList<Bomb> bombs = new ArrayList<>();
+
+	private final ArrayList<TrailPoint> trailPoints = new ArrayList<>();
+
 
 	public void paint(Graphics g) {
+		spawnTrail();
 		Point mouseLoc = MouseInfo.getPointerInfo().getLocation();
 		super.paintComponent(g);
 		//Trail t = trail.get(trail.size() - 1);
@@ -45,9 +56,9 @@ public class Frame extends JPanel implements ActionListener, MouseListener, KeyL
 		background.draw(g);
 		drawLives(g);
 		drawFruits(g);
-		//drawTrail(g);
-		//System.out.println(trail.size());
-		System.out.println(mouseLoc);
+		drawBombs(g);
+		g.setColor(Color.CYAN);
+		drawTrail(g);
 	}
 	
 	public static void main(String[] arg) {
@@ -67,18 +78,10 @@ public class Frame extends JPanel implements ActionListener, MouseListener, KeyL
 		for(int i = 1; i <= 3; i++){
 			lives.add(new Life(i));
 		}
-
-		for(int i = 1; i <= 10; i++){
-			int x = random.nextInt(100, 1200);
-			int y = random.nextInt(800, 850);
-
-			int vx = random.nextInt(-6, 6);
-			int vy = random.nextInt(-23, -18);
-			fruits.add(new Fruit(x, y, vx, vy));
-		}
 		
-		//trail.add(new Trail(MouseInfo.getPointerInfo().getLocation().x, MouseInfo.getPointerInfo().getLocation().y));
-
+		resetFruits();
+		resetBombs();
+		
 		setCursor(Toolkit.getDefaultToolkit().createCustomCursor(
 				new ImageIcon("cursor.png").getImage().getScaledInstance(46, 40, Image.SCALE_DEFAULT),
 				new Point(0,0),"custom cursor"));	
@@ -87,6 +90,7 @@ public class Frame extends JPanel implements ActionListener, MouseListener, KeyL
 		t.start();
 		f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		f.setVisible(true);
+		spawnTrail();
 	}
 	
 	@Override
@@ -128,11 +132,17 @@ public class Frame extends JPanel implements ActionListener, MouseListener, KeyL
 	@Override
 	public void keyPressed(KeyEvent arg0) {
 		int keyCode = arg0.getKeyCode();
+		System.out.println(keyCode);
 		if(keyCode == 82){
 			resetLives();
 			resetFruits();
+			resetBombs();
+		}else if(keyCode == 81){
+			explodeAll();
+			killFruits();
+			System.out.println("boom");
 		}
-		// 38 = up, 40 = down, 37 = left, 39 = right, 82 = r
+		// 38 = up, 40 = down, 37 = left, 39 = right, 82 = r, 22 = q
 	}
 
 	@Override
@@ -164,9 +174,28 @@ public class Frame extends JPanel implements ActionListener, MouseListener, KeyL
 
 	}
 
+	public void resetBombs(){
+		bombs.clear();
+		for(int i = 1; i <= 3; i++){
+			int x = random.nextInt(100, 1200);
+			int y = random.nextInt(800, 850);
+
+			int vx = random.nextInt(-6, 6);
+			int vy = random.nextInt(-20, -15);
+			bombs.add(new Bomb(x, y, vx, vy));
+		}
+
+	}
+
 	public void drawFruits(Graphics g){
 		for(Fruit fruit : fruits){
 			fruit.paint(g);
+		}
+	}
+
+	public void drawBombs(Graphics g){
+		for(Bomb bomb : bombs){
+			bomb.paint(g);
 		}
 	}
 
@@ -177,10 +206,44 @@ public class Frame extends JPanel implements ActionListener, MouseListener, KeyL
 	}
 
 	public void drawTrail(Graphics g){
-		for(Trail t : trail){
-			if(t != null){
-				t.paint(g);
-			}
+		for(Trail t : trails){
+			t.paint(g);
+		}
+		updateTrails();
+	}
+
+	private void spawnTrail() {
+		Point mouseLoc = MouseInfo.getPointerInfo().getLocation();
+        Trail trail = new Trail(mouseLoc.x, mouseLoc.y, lastX, lastY);
+        trails.add(trail);
+        lastX = mouseLoc.x;
+        lastY = mouseLoc.y;
+    }
+
+	private void spawnTrailPoint() {
+		Point mouseLoc = MouseInfo.getPointerInfo().getLocation();
+		double width = 10.0;
+		trailPoints.add(new TrailPoint(mouseLoc.x, mouseLoc.y, width));
+		lastX = mouseLoc.x;
+		lastY = mouseLoc.y;
+	}
+
+
+	private void updateTrails() {
+        trails.removeIf(Trail::shouldRemove); // Clean up old trails
+    }
+
+
+	private void killFruits(){
+		for(Fruit f : fruits){
+			fruitRemnants.add(f.split());
+		}
+		fruits.clear();
+	}
+
+	private void explodeAll(){
+		for(Bomb bomb : bombs){
+			bomb.explode();
 		}
 	}
 }

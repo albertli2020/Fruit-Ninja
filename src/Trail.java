@@ -8,35 +8,17 @@ public class Trail {
     private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
     private final WeakReference<Trail> selfReference;
     
-    private static final int delayMS = 200;
+    private double baseWidth = 6.0; // starts full
+    private final double THIN_RATE = 0.9; // multiplier per frame
+    private boolean shouldRemove = false; // when true, signal for deletion
+
+    private static final int delayMS = 400;
     private int x, y;
     private int pX, pY;
 
     private int[] xPoints;
     private int[] yPoints;
     private int frame;
-
-    public Trail(int x, int y){
-        this.x = x;
-        this.y = y;
-        pX = x - 1;
-        pY = y - 1;
-        frame = 0;
-
-        this.selfReference = new WeakReference<>(this);
-        xPoints = new int[3];
-        yPoints = new int[3];
-        xPoints[0] = x - 3;
-        xPoints[1] = x + 3;
-        xPoints[2] = x + 3;
-        yPoints[0] = y;
-        yPoints[1] = y - 3;
-        yPoints[2] = y + 3;
-
-        getRotation(Math.toRadians(getAngle()));
-        scheduleDestruction(delayMS); //trail expires after 200 ms        
-    }
-
 
     public Trail(int x, int y, int pX, int pY){
         this.x = x;
@@ -60,6 +42,7 @@ public class Trail {
     private void scheduleDestruction(int delayMS) {
         scheduler.schedule(() -> {
             Trail obj = selfReference.get();
+            shouldRemove = true;
             if (obj != null) {
             }
         }, delayMS, TimeUnit.MILLISECONDS);
@@ -73,7 +56,36 @@ public class Trail {
     }
 
     private void thin(){
+        if (baseWidth <= 0.5) {
+            shouldRemove = true;
+            return;
+        }
 
+        baseWidth *= THIN_RATE;
+
+        // Recalculate triangle based on current direction
+        double angle = Math.toRadians((frame == 1) ? 360.0 - getAngle() : getAngle());
+        double cos = Math.cos(angle);
+        double sin = Math.sin(angle);
+
+        // Tip of triangle is at (x, y)
+        int tipX = x;
+        int tipY = y;
+
+        // Base center is behind tip (along reverse direction)
+        int baseCenterX = (int) (x - 10 * cos);
+        int baseCenterY = (int) (y - 10 * sin);
+
+        // Calculate two base corners
+        int baseOffsetX = (int) ((baseWidth / 2.0) * sin);
+        int baseOffsetY = (int) ((baseWidth / 2.0) * -cos);
+
+        xPoints[0] = tipX;
+        yPoints[0] = tipY;
+        xPoints[1] = baseCenterX + baseOffsetX;
+        yPoints[1] = baseCenterY + baseOffsetY;
+        xPoints[2] = baseCenterX - baseOffsetX;
+        yPoints[2] = baseCenterY - baseOffsetY;
     }
 
     private void getRotation(double angle){
@@ -92,18 +104,23 @@ public class Trail {
         int dy = point[1] - cy;
 
         int[] rotated = new int[2];
-        rotated[0] = (int) (dx * cos - dy * sin);
-        rotated[1] = (int) (dx * sin + dy * cos);
+        rotated[0] = (int) (dx * cos - dy * sin) + cx;
+        rotated[1] = (int) (dx * sin + dy * cos) + cy;
         return rotated;
     }
 
     public void paint(Graphics g){
-        if(frame == 1){
+        if (frame == 1) {
+            // Flip angle on second frame
             getRotation(Math.toRadians(360.0 - getAngle()));
         }
-        frame++;
+
         thin();
-        g.drawPolygon(xPoints, yPoints, 3);
+        frame++;
+
+        if (!shouldRemove) {
+            g.fillPolygon(xPoints, yPoints, 3);
+        }
     }
 
     public int getX(){
@@ -113,5 +130,8 @@ public class Trail {
     public int getY(){
         return y;
     }
-    
+
+    public boolean shouldRemove() {
+        return shouldRemove;
+    }
 }
