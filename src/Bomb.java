@@ -9,7 +9,7 @@ import java.util.Random;
 public class Bomb extends Sprite {
     private static final Random random = new Random();
     private static final BufferedImage bomb = resizeHeight(loadImage("/imgs/bomb.png"), 75);
-    private static final BufferedImage boom = resizeHeight(loadImage("/imgs/boom.png"), 75);
+    private static final BufferedImage boom = resizeHeight(loadImage("/imgs/boom.png"), 150);
 
     private double rotationAngle;
     private double angularVelocity;

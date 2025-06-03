@@ -2,7 +2,6 @@ import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
-import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -84,13 +83,17 @@ public class Fruit extends Sprite{
 		}
 
         if(y >= 900) vy = 0;
-
         rotationAngle += angularVelocity;
-        
+
+        g2.fillOval(x, y, 10, 10);
+
         g2.translate(x + sprite.getWidth() / 2, y + sprite.getHeight() / 2);
         g2.rotate(rotationAngle);
         g2.translate(-sprite.getWidth() / 2, -sprite.getHeight() / 2);
         g2.drawImage(sprite, 0, 0, null);
+
+        
+
         /* 
         if (Frame.debugging) {
 			g.setColor(Color.red);
@@ -125,8 +128,6 @@ public class Fruit extends Sprite{
 			g.setColor(Color.green);
 			g.drawRect(x, y, width, height);
 		}
-
-
 	}
 
     public void rotate(float angle){
@@ -137,48 +138,25 @@ public class Fruit extends Sprite{
         
     }
 
-    public Rectangle hitbox() {
-		//centers
-		int centerX = x + (int)(width / 2);
-		int centerY = y + (int)(height / 2);
-        
-				
-		//original corner points
-		double[][] originalPoints = {
-			{-width / 2, -height / 2},  // Top Left
-			{width / 2, -height / 2},   // Top Right
-			{width / 2, height / 2},    // Bottom Right
-			{-width / 2, height / 2}    // Bottom Left
-		};
-		
-		for (int i = 0; i < 4; i++) {
-			originalPoints[i][1] *= 0.9;
-		}	
-
-		//new rotated points
-		int[] xPoints = new int[4];
-		int[] yPoints = new int[4];
-		
-		for (int i = 0; i < 4; i++) {
-			//rotate points
-			double rotatedX = originalPoints[i][0] * Math.cos(rotationAngle) - originalPoints[i][1] * Math.sin(rotationAngle);
-			double rotatedY = originalPoints[i][0] * Math.sin(rotationAngle) + originalPoints[i][1] * Math.cos(rotationAngle);
-			
-			//translate back to coordinates
-			xPoints[i] = centerX + (int)rotatedX;
-			yPoints[i] = centerY + (int)rotatedY;
-		}
-		
-		//create bounding rectangle of the rotated polygon
-		int minX = Arrays.stream(xPoints).min().getAsInt();
-		int maxX = Arrays.stream(xPoints).max().getAsInt();
-		int minY = Arrays.stream(yPoints).min().getAsInt();
-		int maxY = Arrays.stream(yPoints).max().getAsInt();
-		
-		return new Rectangle(minX, minY, maxX - minX, maxY - minY);
-	}
-
     public SplitFruit split(){
-        return new SplitFruit(x, y, vx, vy, rotationAngle, angularVelocity, fruitID);
+        SplitFruit sf =  new SplitFruit(x, y, vx, vy, rotationAngle, angularVelocity, fruitID, width);
+        System.out.println(sf.toString());
+        return sf;
+    }
+
+    public boolean slice(int mouseX, int mouseY){
+        AffineTransform inverse = new AffineTransform();
+        inverse.translate(x + sprite.getWidth() / 2, y + sprite.getHeight() / 2);
+        inverse.rotate(rotationAngle);
+        inverse.translate(-sprite.getWidth() / 2, -sprite.getHeight() / 2);
+        
+        if (mouseX >= x && mouseY >= y && mouseX < x + sprite.getWidth() && mouseY < y + sprite.getHeight()) {
+            int alpha = (sprite.getRGB(mouseX - x, mouseY - y) >> 24) & 0xff;
+            if (alpha > 10) {
+                System.out.println("Pixel-perfect hit!");
+                return true;
+            }
+        }
+        return false;
     }
 }
