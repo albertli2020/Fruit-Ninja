@@ -3,6 +3,8 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.NoninvertibleTransformException;
+import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.ArrayList;
@@ -144,16 +146,29 @@ public class Fruit extends Sprite{
         return sf;
     }
 
-    public boolean slice(int mouseX, int mouseY){
+    public boolean slice(float fx, float fy) {
         AffineTransform inverse = new AffineTransform();
         inverse.translate(x + sprite.getWidth() / 2, y + sprite.getHeight() / 2);
         inverse.rotate(rotationAngle);
         inverse.translate(-sprite.getWidth() / 2, -sprite.getHeight() / 2);
-        
-        if (mouseX >= x && mouseY >= y && mouseX < x + sprite.getWidth() && mouseY < y + sprite.getHeight()) {
-            int alpha = (sprite.getRGB(mouseX - x, mouseY - y) >> 24) & 0xff;
+
+        // Transform the global point (fx, fy) to image-local coordinates
+        Point2D.Float mouse = new Point2D.Float(fx, fy);
+        Point2D.Float local = new Point2D.Float();
+        try {
+            inverse.inverseTransform(mouse, local);
+        } catch (NoninvertibleTransformException e) {
+            e.printStackTrace();
+            return false;
+        }
+
+        int lx = (int) local.getX();
+        int ly = (int) local.getY();
+
+        if (lx >= 0 && ly >= 0 && lx < sprite.getWidth() && ly < sprite.getHeight()) {
+            int alpha = (sprite.getRGB(lx, ly) >> 24) & 0xff;
             if (alpha > 10) {
-                System.out.println("Pixel-perfect hit!");
+                System.out.println("Pixel-perfect segment hit!");
                 return true;
             }
         }

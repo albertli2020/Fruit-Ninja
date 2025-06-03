@@ -49,10 +49,13 @@ public class Frame extends JPanel implements ActionListener, MouseListener, KeyL
 	private ArrayList<Bomb> bombs = new ArrayList<>();
 
 	private final ArrayList<TrailPoint> trailPoints = new ArrayList<>();
+	private Point lastMousePoint = null;
+
 
 	private Point loc;
 
 	public void paint(Graphics g) {
+		trail.add(new TrailPoint(loc.x + 2, loc.y - 18, 10));
 		super.paintComponent(g);
 		Graphics2D g2 = (Graphics2D) g;
 		g2.setColor(Color.CYAN);
@@ -61,7 +64,6 @@ public class Frame extends JPanel implements ActionListener, MouseListener, KeyL
 		background.draw(g);
 		drawLives(g);
 		drawFruits(g);
-		g.fillOval(loc.x, loc.y, 10, 10);
 
 		//drawBombs(g);
 		for (int i = 0; i < trail.size() - 1; i++) {
@@ -70,7 +72,6 @@ public class Frame extends JPanel implements ActionListener, MouseListener, KeyL
 
 			drawTrail(p1, p2, g2);
         }
-		g.fillOval(300, 300, 10, 10);
 
 		g.setColor(Color.CYAN);
 	}
@@ -90,9 +91,7 @@ public class Frame extends JPanel implements ActionListener, MouseListener, KeyL
 		f.addKeyListener(this);
 		f.addMouseMotionListener(this);
 
-
 		loc = MouseInfo.getPointerInfo().getLocation();
-
 
 		for(int i = 1; i <= 3; i++){
 			lives.add(new Life(i));
@@ -135,10 +134,13 @@ public class Frame extends JPanel implements ActionListener, MouseListener, KeyL
 	@Override
 	public void mouseMoved(MouseEvent e) {
         trail.add(new TrailPoint(e.getX() + 2, e.getY() - 18, 10));
-		
-		loc = new Point(e.getX(), e.getY() - 26);
+		loc = e.getPoint();
 
-		detectCuts();
+		if (lastMousePoint != null) {
+			checkSegmentForCut(lastMousePoint, loc);
+		}
+
+    	lastMousePoint = loc;
     }
 
 	@Override
@@ -246,13 +248,19 @@ public class Frame extends JPanel implements ActionListener, MouseListener, KeyL
 		}
 	}
 
-	public void detectCuts(){
-		for(int i = 0; i < fruits.size(); i++){
-			Fruit f = fruits.get(i);
-			if(f.slice(loc.x, loc.y)){
-				fruitRemnants.add(f.split());
-				fruits.remove(i);
-				i--;
+	public void checkSegmentForCut(Point p1, Point p2) {
+		int steps = (int) p1.distance(p2);
+		for(Fruit fruit : fruits){
+			for (int i = 0; i <= steps; i++) {
+				float t = i / (float) steps;
+				float x = (float)(p1.x + t * (p2.x - p1.x));
+				float y = (float)(p1.y + t * (p2.y - p1.y));
+
+				if (fruit.slice(x, y)) {
+					fruitRemnants.add(fruit.split());
+					fruits.remove(fruit);
+					break;
+				}
 			}
 		}
 	}
@@ -277,11 +285,9 @@ public class Frame extends JPanel implements ActionListener, MouseListener, KeyL
 			double len = Math.sqrt(dx * dx + dy * dy);
 			if (len == 0) return;
 
-			// Normal vector (perpendicular)
 			double nx = -dy / len;
 			double ny = dx / len;
 
-			// Left and right offset points for both ends
 			int x1l = (int) (p1.x + nx * p1.width / 2);
 			int y1l = (int) (p1.y + ny * p1.width / 2);
 			int x1r = (int) (p1.x - nx * p1.width / 2);
@@ -292,20 +298,17 @@ public class Frame extends JPanel implements ActionListener, MouseListener, KeyL
 			int x2r = (int) (p2.x - nx * p2.width / 2);
 			int y2r = (int) (p2.y - ny * p2.width / 2);
 
-			// Set fading alpha based on average width
 			float avgWidth = (float)((p1.width + p2.width) / 2.0);
 			float alpha = Math.max(0f, Math.min(1f, avgWidth / 10f));
 			g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
 			g2.setColor(Color.WHITE);
 
-			// Triangle 1
 			Polygon triangle1 = new Polygon();
 			triangle1.addPoint(x1l, y1l);
 			triangle1.addPoint(x1r, y1r);
 			triangle1.addPoint(x2l, y2l);
 			g2.fillPolygon(triangle1);
 
-			// Triangle 2
 			Polygon triangle2 = new Polygon();
 			triangle2.addPoint(x2l, y2l);
 			triangle2.addPoint(x1r, y1r);
