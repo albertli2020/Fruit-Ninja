@@ -10,27 +10,27 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Random;
 
-public class Fruit extends Sprite{
+public class Character extends Sprite{
     private static final Random random = new Random();
-    private static final String fruitDir = "src/imgs/fruits";
-    private static final File directory = new File(fruitDir);
-    private static final File[] fruitFiles = directory.listFiles();
-    private static final ArrayList<BufferedImage> fruitImages = new ArrayList<>();
+    private static final String characterDir = "src/imgs/characters";
+    private static final File directory = new File(characterDir);
+    private static final File[] characterFiles = directory.listFiles();
+    private static final ArrayList<BufferedImage> characterImages = new ArrayList<>();
+
+    private int characterID;
 
     private double rotationAngle;
     private double angularVelocity;
 
-    private int fruitID;
-
     static{
-        if(fruitFiles != null){
-            Arrays.sort(fruitFiles);
-            for(File file : fruitFiles){
+        if(characterFiles != null){
+            Arrays.sort(characterFiles);
+            for(File file : characterFiles){
                 if(file.isFile()){
-                    String relativePath = "/imgs/fruits/" + file.getName();
-                    BufferedImage img = resizeFruitHeight(loadImage(relativePath), 75);
+                    String relativePath = "/imgs/characters/" + file.getName();
+                    BufferedImage img = resizeHeight(loadImage(relativePath), 75);
                     if(img != null){
-                        fruitImages.add(img);
+                        characterImages.add(img);
                     }else{
                         System.out.println("Failed to load image: " + file.getName());
                     }
@@ -39,36 +39,37 @@ public class Fruit extends Sprite{
         }
     }
 
-    public Fruit(int x, int y, int vx, int vy){
+    public Character(int x, int y, int vx, int vy){
         super(x, y, vx, vy, 0, 0);
-        //sprite = fruitImages.get(random.nextInt(0, fruitImages.size()));
-        fruitID = random.nextInt(0, fruitImages.size());
-        sprite = fruitImages.get(fruitID);
+
+        characterID = random.nextInt(0, characterImages.size());
+        sprite = characterImages.get(characterID);
+
         this.width = sprite.getWidth();
         this.height = sprite.getHeight();
+
         rotationAngle = Math.random()*10;
         angularVelocity = random.nextDouble(-0.2, 0.2);
-        //fruit shoudl have projectile motion, vx stays constant, vy changes with accleration from gravity, initial vy should be negative
 
     }
 
-    private static BufferedImage resizeFruitHeight(BufferedImage originalFruit, int newHeight){
-        int originalWidth = originalFruit.getWidth();
-        int originalHeight = originalFruit.getHeight();
+    private static BufferedImage resizeHeight(BufferedImage originalImage, int newHeight){
+        int originalWidth = originalImage.getWidth();
+        int originalHeight = originalImage.getHeight();
         if (newHeight == originalHeight) {
-            return originalFruit;
+            return originalImage;
         }
 
         double scaleFactor = (double) newHeight / originalHeight;
         int newWidth = (int) (originalWidth * scaleFactor);
 
-        Image resFruit = originalFruit.getScaledInstance(newWidth, newHeight, Image.SCALE_SMOOTH);
-        BufferedImage resizedFruit = new BufferedImage(newWidth, newHeight, BufferedImage.TYPE_INT_ARGB);
-        resizedFruit.getGraphics().drawImage(resFruit, 0, 0, null);
-        return resizedFruit;
+        Image resFruit = originalImage.getScaledInstance(newWidth, newHeight, Image.SCALE_SMOOTH);
+        BufferedImage resizedImage = new BufferedImage(newWidth, newHeight, BufferedImage.TYPE_INT_ARGB);
+        resizedImage.getGraphics().drawImage(resFruit, 0, 0, null);
+        return resizedImage;
     }
 
-    @Override
+     @Override
     public void paint(Graphics g) {
 		Graphics2D g2 = (Graphics2D) g;
         AffineTransform originalTransform = g2.getTransform();
@@ -96,18 +97,8 @@ public class Fruit extends Sprite{
 
 	}
 
-    public void rotate(float angle){
-        this.rotationAngle = angle;
-    }
-
-    public void setAngularVelocity(float w){
-        
-    }
-
-    public SplitFruit split(){
-        SplitFruit sf =  new SplitFruit(x, y, vx, vy, rotationAngle, angularVelocity, fruitID, width);
-        System.out.println(sf.toString());
-        return sf;
+    public SplitCharacter split(){
+        return new SplitCharacter(x, y, vx, vy, rotationAngle, angularVelocity, characterID, width);
     }
 
     public boolean slice(float fx, float fy) {
@@ -137,5 +128,5 @@ public class Fruit extends Sprite{
         return false;
     }
 
-
+    
 }

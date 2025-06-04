@@ -96,4 +96,11 @@ public class SplitFruit{
         part2.paint(g);        
     }
 
+    public FruitFragment getFrag1(){
+        return part1;
+    }
+
+    public FruitFragment getFrag2(){
+        return part2;
+    }
 }

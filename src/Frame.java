@@ -31,7 +31,7 @@ public class Frame extends JPanel implements ActionListener, MouseListener, KeyL
 	private static final Random random = new Random();
 	public static boolean debugging = true;
 	public static boolean simpleMovement = true;
-
+	
 	//Timer related variables
 	Background background;
 	long ellapseTime = 0;
@@ -40,19 +40,22 @@ public class Frame extends JPanel implements ActionListener, MouseListener, KeyL
 
 	int width = 1422;
 	int height = 800;
-	int frame;
 	
 	private ArrayList<Life> lives = new ArrayList<>();
 	private ArrayList<Fruit> fruits = new ArrayList<>();
 	private ArrayList<SplitFruit> fruitRemnants = new ArrayList<>();
 	private ArrayList<TrailPoint> trail = new ArrayList<>();
 	private ArrayList<Bomb> bombs = new ArrayList<>();
+	private ArrayList<Character> characters = new ArrayList<>();
+	private ArrayList<SplitCharacter> splitCharacters = new ArrayList<>();
+
 
 	private final ArrayList<TrailPoint> trailPoints = new ArrayList<>();
 	private Point lastMousePoint = null;
 
-
 	private Point loc;
+
+	private int score;
 
 	public void paint(Graphics g) {
 		trail.add(new TrailPoint(loc.x + 2, loc.y - 18, 10));
@@ -64,6 +67,15 @@ public class Frame extends JPanel implements ActionListener, MouseListener, KeyL
 		background.draw(g);
 		drawLives(g);
 		drawFruits(g);
+
+		drawCharaters(g);
+
+		g2.setFont(FontLoader.feastFont);
+		g2.setColor(new Color(157,72,5));
+		g2.drawString("Score: " + score, 102, 102); // offset slightly for shadow
+
+		g2.setColor(new Color(235,149,20));
+		g2.drawString("Score: " + score, 100, 100);
 
 		//drawBombs(g);
 		for (int i = 0; i < trail.size() - 1; i++) {
@@ -90,7 +102,8 @@ public class Frame extends JPanel implements ActionListener, MouseListener, KeyL
 		f.addMouseListener(this);
 		f.addKeyListener(this);
 		f.addMouseMotionListener(this);
-
+		
+		score = 0;
 		loc = MouseInfo.getPointerInfo().getLocation();
 
 		for(int i = 1; i <= 3; i++){
@@ -98,6 +111,7 @@ public class Frame extends JPanel implements ActionListener, MouseListener, KeyL
 		}
 		
 		resetFruits();
+		resetCharacters();
 		//resetBombs();
 		
 		setCursor(Toolkit.getDefaultToolkit().createCustomCursor(
@@ -176,10 +190,10 @@ public class Frame extends JPanel implements ActionListener, MouseListener, KeyL
 			resetLives();
 			resetFruits();
 			resetBombs();
+			resetCharacters();
 		}else if(keyCode == 81){
-			explodeAll();
+			bombs.clear();
 			killFruits();
-			System.out.println("boom");
 		}
 		// 38 = up, 40 = down, 37 = left, 39 = right, 82 = r, 22 = q
 	}
@@ -210,8 +224,20 @@ public class Frame extends JPanel implements ActionListener, MouseListener, KeyL
 			int vy = random.nextInt(-20, -15);
 			fruits.add(new Fruit(x, y, vx, vy));
 		}
-
 		fruitRemnants.clear();
+	}
+
+	public void resetCharacters(){
+		characters.clear();
+		for(int i = 0; i < 2; i++){
+			int x = random.nextInt(100, 1200);
+			int y = random.nextInt(800, 850);
+
+			int vx = random.nextInt(-6, 6);
+			int vy = random.nextInt(-20, -15);
+			characters.add(new Character(x, y, vx, vy));
+		}
+		splitCharacters.clear();
 	}
 
 	public void resetBombs(){
@@ -232,8 +258,26 @@ public class Frame extends JPanel implements ActionListener, MouseListener, KeyL
 		}
 
 		for(SplitFruit sf : fruitRemnants){
+			if(sf.getFrag1().y >= 1000 && sf.getFrag2().y >= 1000){
+				fruitRemnants.remove(sf);
+				continue;
+			}
 			sf.paint(g);
 		}
+	}
+
+	public void drawCharaters(Graphics g){
+		for(Character character : characters){
+			character.paint(g);
+		}
+		for(SplitCharacter sc : splitCharacters){
+			if(sc.getPart1().y >= 1000 && sc.getPart2().y >= 1000){
+				splitCharacters.remove(sc);
+				continue;
+			}
+			sc.paint(g);
+		}
+		
 	}
 
 	public void drawBombs(Graphics g){
@@ -250,7 +294,10 @@ public class Frame extends JPanel implements ActionListener, MouseListener, KeyL
 
 	public void checkSegmentForCut(Point p1, Point p2) {
 		int steps = (int) p1.distance(p2);
-		for(Fruit fruit : fruits){
+
+		// Fruits
+		ArrayList<Fruit> toRemoveFruits = new ArrayList<>();
+		for (Fruit fruit : fruits) {
 			for (int i = 0; i <= steps; i++) {
 				float t = i / (float) steps;
 				float x = (float)(p1.x + t * (p2.x - p1.x));
@@ -258,11 +305,31 @@ public class Frame extends JPanel implements ActionListener, MouseListener, KeyL
 
 				if (fruit.slice(x, y)) {
 					fruitRemnants.add(fruit.split());
-					fruits.remove(fruit);
+					toRemoveFruits.add(fruit);
+					score += 100;
 					break;
 				}
 			}
 		}
+		fruits.removeAll(toRemoveFruits);
+
+		// Characters
+		ArrayList<Character> toRemoveChars = new ArrayList<>();
+		for (Character character : characters) {
+			for (int i = 0; i <= steps; i++) {
+				float t = i / (float) steps;
+				float x = (float)(p1.x + t * (p2.x - p1.x));
+				float y = (float)(p1.y + t * (p2.y - p1.y));
+
+				if (character.slice(x, y)) {
+					splitCharacters.add(character.split());
+					toRemoveChars.add(character);
+					score += 200;
+					break;
+				}
+			}
+		}
+		characters.removeAll(toRemoveChars);
 	}
 
 	private void killFruits(){
@@ -272,47 +339,40 @@ public class Frame extends JPanel implements ActionListener, MouseListener, KeyL
 		fruits.clear();
 	}
 
-	private void explodeAll(){
-		for(Bomb bomb : bombs){
-			bomb.explode();
-		}
-	}
-
 	private void drawTrail(TrailPoint p1, TrailPoint p2, Graphics2D g2){
+		double dx = p2.x - p1.x;
+		double dy = p2.y - p1.y;
+		double len = Math.sqrt(dx * dx + dy * dy);
+		if (len == 0) return;
 
-			double dx = p2.x - p1.x;
-			double dy = p2.y - p1.y;
-			double len = Math.sqrt(dx * dx + dy * dy);
-			if (len == 0) return;
+		double nx = -dy / len;
+		double ny = dx / len;
 
-			double nx = -dy / len;
-			double ny = dx / len;
+		int x1l = (int) (p1.x + nx * p1.width / 2);
+		int y1l = (int) (p1.y + ny * p1.width / 2);
+		int x1r = (int) (p1.x - nx * p1.width / 2);
+		int y1r = (int) (p1.y - ny * p1.width / 2);
 
-			int x1l = (int) (p1.x + nx * p1.width / 2);
-			int y1l = (int) (p1.y + ny * p1.width / 2);
-			int x1r = (int) (p1.x - nx * p1.width / 2);
-			int y1r = (int) (p1.y - ny * p1.width / 2);
+		int x2l = (int) (p2.x + nx * p2.width / 2);
+		int y2l = (int) (p2.y + ny * p2.width / 2);
+		int x2r = (int) (p2.x - nx * p2.width / 2);
+		int y2r = (int) (p2.y - ny * p2.width / 2);
 
-			int x2l = (int) (p2.x + nx * p2.width / 2);
-			int y2l = (int) (p2.y + ny * p2.width / 2);
-			int x2r = (int) (p2.x - nx * p2.width / 2);
-			int y2r = (int) (p2.y - ny * p2.width / 2);
+		float avgWidth = (float)((p1.width + p2.width) / 2.0);
+		float alpha = Math.max(0f, Math.min(1f, avgWidth / 10f));
+		g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
+		g2.setColor(Color.WHITE);
 
-			float avgWidth = (float)((p1.width + p2.width) / 2.0);
-			float alpha = Math.max(0f, Math.min(1f, avgWidth / 10f));
-			g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
-			g2.setColor(Color.WHITE);
+		Polygon triangle1 = new Polygon();
+		triangle1.addPoint(x1l, y1l);
+		triangle1.addPoint(x1r, y1r);
+		triangle1.addPoint(x2l, y2l);
+		g2.fillPolygon(triangle1);
 
-			Polygon triangle1 = new Polygon();
-			triangle1.addPoint(x1l, y1l);
-			triangle1.addPoint(x1r, y1r);
-			triangle1.addPoint(x2l, y2l);
-			g2.fillPolygon(triangle1);
-
-			Polygon triangle2 = new Polygon();
-			triangle2.addPoint(x2l, y2l);
-			triangle2.addPoint(x1r, y1r);
-			triangle2.addPoint(x2r, y2r);
-			g2.fillPolygon(triangle2);
+		Polygon triangle2 = new Polygon();
+		triangle2.addPoint(x2l, y2l);
+		triangle2.addPoint(x1r, y1r);
+		triangle2.addPoint(x2r, y2r);
+		g2.fillPolygon(triangle2);
 	}
 }
