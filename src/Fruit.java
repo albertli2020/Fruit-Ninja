@@ -100,8 +100,8 @@ public class Fruit extends Sprite{
         this.rotationAngle = angle;
     }
 
-    public void setAngularVelocity(float w){
-        
+    public void setAngularVelocity(double w){
+        angularVelocity = w;
     }
 
     public SplitFruit split(){
@@ -137,5 +137,8 @@ public class Fruit extends Sprite{
         return false;
     }
 
+    public double getAngularVelocity(){
+        return angularVelocity;
+    }
 
 }

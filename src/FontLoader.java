@@ -17,4 +17,15 @@ public class FontLoader {
             feastFont = new Font("SansSerif", Font.BOLD, 48);
         }
     }
+
+    public static void setSize(float size){
+        try {
+            feastFont = Font.createFont(Font.TRUETYPE_FONT, new File("src/fonts/FEASFBRG.TTF")).deriveFont(Font.PLAIN, size); 
+            GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+            ge.registerFont(feastFont);
+        } catch (IOException | FontFormatException e) {
+            e.printStackTrace();
+            feastFont = new Font("SansSerif", Font.BOLD, (int) size);
+        }
+    }
 }

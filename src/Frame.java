@@ -26,10 +26,12 @@ import javax.swing.JPanel;
 import javax.swing.Timer;
 
 public class Frame extends JPanel implements ActionListener, MouseListener, KeyListener, MouseMotionListener {
+	Driver driver;
+
 	private final double THINNING_RATE = 0.95;
     private final double MIN_WIDTH = 0.5;
 	private static final Random random = new Random();
-	public static boolean debugging = true;
+	public static boolean debugging = false;
 	public static boolean simpleMovement = true;
 	
 	//Timer related variables
@@ -51,13 +53,13 @@ public class Frame extends JPanel implements ActionListener, MouseListener, KeyL
 
 
 	private final ArrayList<TrailPoint> trailPoints = new ArrayList<>();
+	
 	private Point lastMousePoint = null;
-
 	private Point loc;
 
 	private int score;
 
-	public void paint(Graphics g) {
+	public void paintComponent(Graphics g) {
 		trail.add(new TrailPoint(loc.x + 2, loc.y - 18, 10));
 		super.paintComponent(g);
 		Graphics2D g2 = (Graphics2D) g;
@@ -70,12 +72,22 @@ public class Frame extends JPanel implements ActionListener, MouseListener, KeyL
 
 		drawCharaters(g);
 
+		FontLoader.setSize(48);
 		g2.setFont(FontLoader.feastFont);
 		g2.setColor(new Color(157,72,5));
-		g2.drawString("Score: " + score, 102, 102); // offset slightly for shadow
+		g2.drawString("Score: " + score, 52, 52); // offset slightly for shadow
 
 		g2.setColor(new Color(235,149,20));
-		g2.drawString("Score: " + score, 100, 100);
+		g2.drawString("Score: " + score, 50, 50);
+
+		FontLoader.setSize(28);
+		g2.setFont(FontLoader.feastFont);
+		g2.setColor(new Color(157,72,5));
+		g2.drawString("High Score: " + score, 52, 77); 
+
+		g2.setColor(new Color(235,149,20));
+		g2.drawString("High Score: " + score, 50, 75);
+
 
 		//drawBombs(g);
 		for (int i = 0; i < trail.size() - 1; i++) {
@@ -87,21 +99,24 @@ public class Frame extends JPanel implements ActionListener, MouseListener, KeyL
 
 		g.setColor(Color.CYAN);
 	}
+
 	
-	public static void main(String[] arg) {
-		Frame f = new Frame();
-	}
-	
-	public Frame() {
+	public Frame(Driver driver) {
+		this.driver = driver;
+		setPreferredSize(new Dimension(1422, 800));
+        setFocusable(true);
+        requestFocusInWindow();
+
+		JFrame f = driver.frame;
+		
 		background = new Background("default.png");
-		JFrame f = new JFrame("Fruit Ninja");
-		f.setSize(new Dimension(width, height));
-		f.add(this);
-		f.setBackground(Color.white);
-		f.setResizable(false);
-		f.addMouseListener(this);
-		f.addKeyListener(this);
-		f.addMouseMotionListener(this);
+		addMouseListener(this);
+		addKeyListener(this);
+		addMouseMotionListener(this);
+
+		setFocusable(true);
+		requestFocusInWindow(); 
+
 		
 		score = 0;
 		loc = MouseInfo.getPointerInfo().getLocation();

@@ -1,4 +1,3 @@
-import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
@@ -6,21 +5,23 @@ import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.util.Random;
 
-public class Bomb extends Sprite {
+public class StartRing extends Sprite{
     private static final Random random = new Random();
-    private static final BufferedImage bomb = resizeHeight(loadImage("/imgs/bomb.png"), 75);
-    private static final BufferedImage boom = resizeHeight(loadImage("/imgs/boom.png"), 150);
-
+    private static final BufferedImage startRing = resizeHeight(loadImage("/imgs/startRing.png"), 225);
+ 
     private double rotationAngle;
     private double angularVelocity;
 
-    public Bomb(int x, int y, int vx, int vy){
-        super(x, y, vx, vy, 0, 0);
-        sprite = bomb;
+    
+    public StartRing(int x, int y, double rotation){
+        super(x, y, 0, 0, 0, 0);
+        this.sprite = startRing;
+        this.fixed = true;
         this.width = sprite.getWidth();
         this.height = sprite.getHeight();
         rotationAngle = Math.random() * 10;
-        angularVelocity = random.nextDouble(-0.2, 0.2);
+        this.angularVelocity = rotation;
+
     }
 
     private static BufferedImage resizeHeight(BufferedImage originalImage, int newHeight){
@@ -40,53 +41,18 @@ public class Bomb extends Sprite {
     }
 
     @Override
-    public void paint(Graphics g) {
-		Graphics2D g2 = (Graphics2D) g;
+    public void paint(Graphics g){
+        Graphics2D g2 = (Graphics2D) g;
         AffineTransform originalTransform = g2.getTransform();
 
-		if(x <= -20 || x >= 1430){
-            vx *= -1;
-        }
-        x += vx;
-        y += vy;
-        cntr ++;
-		if(cntr % 3 == 0){
-			if(!fixed) vy += GRAVITY;
-		}
-
-        if(y >= 900) vy = 0;
-
         rotationAngle += angularVelocity;
-        
         g2.translate(x + sprite.getWidth() / 2, y + sprite.getHeight() / 2);
         g2.rotate(rotationAngle);
         g2.translate(-sprite.getWidth() / 2, -sprite.getHeight() / 2);
         g2.drawImage(sprite, 0, 0, null);
 
         g2.setTransform(originalTransform);
-
-        if(Frame.debugging){
-			g.setColor(Color.green);
-			g.drawRect(x, y, width, height);
-		}
-
-
-	}
-
-    public void rotate(float angle){
-        this.rotationAngle = angle;
     }
+    
 
-    public void setAngularVelocity(float w){
-        angularVelocity = w;
-    }
-
-    public void explode(){
-        sprite = boom;
-        rotationAngle = 0;
-        angularVelocity = 0;
-        vx = 0;
-        vy = 0;
-        fixed = true;
-    }
 }
