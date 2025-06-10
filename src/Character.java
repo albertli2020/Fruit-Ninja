@@ -74,7 +74,7 @@ public class Character extends Sprite{
 		Graphics2D g2 = (Graphics2D) g;
         AffineTransform originalTransform = g2.getTransform();
 
-		if(x <= -20 || x >= 1430){
+		if(x <= -20 || x >= 1380){
             vx *= -1;
         }
         x += vx;

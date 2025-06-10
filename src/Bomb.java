@@ -3,6 +3,8 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.NoninvertibleTransformException;
+import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.util.Random;
 
@@ -44,7 +46,7 @@ public class Bomb extends Sprite {
 		Graphics2D g2 = (Graphics2D) g;
         AffineTransform originalTransform = g2.getTransform();
 
-		if(x <= -20 || x >= 1430){
+		if(x <= -20 || x >= 1380){
             vx *= -1;
         }
         x += vx;
@@ -69,8 +71,6 @@ public class Bomb extends Sprite {
 			g.setColor(Color.green);
 			g.drawRect(x, y, width, height);
 		}
-
-
 	}
 
     public void rotate(float angle){
@@ -89,4 +89,32 @@ public class Bomb extends Sprite {
         vy = 0;
         fixed = true;
     }
+
+    public boolean slice(float fx, float fy) {
+        AffineTransform inverse = new AffineTransform();
+        inverse.translate(x + sprite.getWidth() / 2, y + sprite.getHeight() / 2);
+        inverse.rotate(rotationAngle);
+        inverse.translate(-sprite.getWidth() / 2, -sprite.getHeight() / 2);
+
+        Point2D.Float mouse = new Point2D.Float(fx, fy);
+        Point2D.Float local = new Point2D.Float();
+        try {
+            inverse.inverseTransform(mouse, local);
+        } catch (NoninvertibleTransformException e) {
+            e.printStackTrace();
+            return false;
+        }
+
+        int lx = (int) local.getX();
+        int ly = (int) local.getY();
+
+        if (lx >= 0 && ly >= 0 && lx < sprite.getWidth() && ly < sprite.getHeight()) {
+            int alpha = (sprite.getRGB(lx, ly) >> 24) & 0xff;
+            if (alpha > 10) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 }

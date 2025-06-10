@@ -1,5 +1,6 @@
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Image;
 import java.awt.image.BufferedImage;
 
 public class Life extends Sprite{
@@ -9,9 +10,16 @@ public class Life extends Sprite{
     private int lifeNum;
     private boolean filled;
 
-    public Life(){
-        super(0, 0, 0, 0, 0, 0);
+    public Life(int x, boolean filled){
+        super(x, 800, 0, -10, 0, 0);
+        fixed = false;
+        this.filled = filled;
         counter = false;
+        if(filled){
+            sprite = resizeHeight(fullLife, 60);
+        }else{
+            sprite = blankLife;
+        }
     }
 
     public Life(int lifeNum){
@@ -25,19 +33,34 @@ public class Life extends Sprite{
         scaleWidth = Math.pow(1.3, lifeNum - 1) + 0.1;
     }
 
+    private static BufferedImage resizeHeight(BufferedImage originalImage, int newHeight){
+        int originalWidth = originalImage.getWidth();
+        int originalHeight = originalImage.getHeight();
+        if (newHeight == originalHeight) {
+            return originalImage;
+        }
+
+        double scaleFactor = (double) newHeight / originalHeight;
+        int newWidth = (int) (originalWidth * scaleFactor);
+
+        Image resFruit = originalImage.getScaledInstance(newWidth, newHeight, Image.SCALE_SMOOTH);
+        BufferedImage resizedImage = new BufferedImage(newWidth, newHeight, BufferedImage.TYPE_INT_ARGB);
+        resizedImage.getGraphics().drawImage(resFruit, 0, 0, null);
+        return resizedImage;
+    }
+
+
     @Override  
     public void paint(Graphics g){
         Graphics2D g2 = (Graphics2D) g;
         super.paint(g);
     }
 
-    public void update(){
-        filled = !filled;
-        if(filled){
-            sprite = fullLife;
-        }else{
-            sprite = blankLife;
-        }
+    public void lifeLost(){
+        sprite = fullLife;
     }
 
+    public void reset(){
+        sprite = blankLife;
+    }
 }

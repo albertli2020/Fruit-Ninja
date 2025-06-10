@@ -73,7 +73,7 @@ public class Fruit extends Sprite{
 		Graphics2D g2 = (Graphics2D) g;
         AffineTransform originalTransform = g2.getTransform();
 
-		if(x <= -20 || x >= 1430){
+		if(x <= -20 || x >= 1380){
             vx *= -1;
         }
         x += vx;
@@ -105,9 +105,7 @@ public class Fruit extends Sprite{
     }
 
     public SplitFruit split(){
-        SplitFruit sf =  new SplitFruit(x, y, vx, vy, rotationAngle, angularVelocity, fruitID, width);
-        System.out.println(sf.toString());
-        return sf;
+        return new SplitFruit(x, y, vx, vy, rotationAngle, angularVelocity, fruitID, width);
     }
 
     public boolean slice(float fx, float fy) {

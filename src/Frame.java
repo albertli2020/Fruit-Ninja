@@ -17,9 +17,12 @@ import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Random;
+import java.util.Scanner;
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -34,7 +37,6 @@ public class Frame extends JPanel implements ActionListener, MouseListener, KeyL
 	public static boolean debugging = false;
 	public static boolean simpleMovement = true;
 	
-	//Timer related variables
 	Background background;
 	long ellapseTime = 0;
 	Font timeFont = new Font("Courier", Font.BOLD, 70);
@@ -42,6 +44,10 @@ public class Frame extends JPanel implements ActionListener, MouseListener, KeyL
 
 	int width = 1422;
 	int height = 800;
+
+	private static String highScoreFile = "src/highScore.txt";
+
+	private int livesLost;
 	
 	private ArrayList<Life> lives = new ArrayList<>();
 	private ArrayList<Fruit> fruits = new ArrayList<>();
@@ -50,14 +56,13 @@ public class Frame extends JPanel implements ActionListener, MouseListener, KeyL
 	private ArrayList<Bomb> bombs = new ArrayList<>();
 	private ArrayList<Character> characters = new ArrayList<>();
 	private ArrayList<SplitCharacter> splitCharacters = new ArrayList<>();
-
-
-	private final ArrayList<TrailPoint> trailPoints = new ArrayList<>();
+	private ArrayList<Life> lostLives = new ArrayList<>();
 	
 	private Point lastMousePoint = null;
 	private Point loc;
 
 	private int score;
+	private int highScore;
 
 	public void paintComponent(Graphics g) {
 		trail.add(new TrailPoint(loc.x + 2, loc.y - 18, 10));
@@ -67,7 +72,6 @@ public class Frame extends JPanel implements ActionListener, MouseListener, KeyL
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 		
 		background.draw(g);
-		drawLives(g);
 		drawFruits(g);
 
 		drawCharaters(g);
@@ -80,16 +84,55 @@ public class Frame extends JPanel implements ActionListener, MouseListener, KeyL
 		g2.setColor(new Color(235,149,20));
 		g2.drawString("Score: " + score, 50, 50);
 
+
+		if(score > highScore) highScore = score;
+
 		FontLoader.setSize(28);
 		g2.setFont(FontLoader.feastFont);
 		g2.setColor(new Color(157,72,5));
-		g2.drawString("High Score: " + score, 52, 77); 
+		g2.drawString("High Score: " + highScore, 52, 77); 
 
 		g2.setColor(new Color(235,149,20));
-		g2.drawString("High Score: " + score, 50, 75);
+		g2.drawString("High Score: " + highScore, 50, 75);
+
+		drawBombs(g);
+
+		if(livesLost >= 3){
+			background.draw(g);
+
+			FontLoader.setSize(55);
+			g2.setFont(FontLoader.feastFont);
+			g2.setColor(new Color(180,38,35));
+			g2.drawString("Score: " + score, 502, 202); // offset slightly for shadow
+
+			g2.setColor(new Color(227,35,35));
+			g2.drawString("Score: " + score, 500, 200);
 
 
-		//drawBombs(g);
+			FontLoader.setSize(80);
+			g2.setFont(FontLoader.feastFont);
+			g2.setColor(new Color(180,38,35));
+			g2.drawString("Game Over", 502, 302); // offset slightly for shadow
+
+			g2.setColor(new Color(227,35,35));
+			g2.drawString("Game Over", 500, 300);
+
+
+			FontLoader.setSize(55);
+			g2.setFont(FontLoader.feastFont);
+
+			g2.setColor(new Color(180,38,35));
+			g2.drawString("Press 'r' to play again", 502, 402); // offset slightly for shadow
+
+			g2.setColor(new Color(227,35,35));
+			g2.drawString("Press 'r' to play again", 500, 400);
+
+
+		}
+		
+		drawLostLives(g);
+		drawLives(g);
+
 		for (int i = 0; i < trail.size() - 1; i++) {
 			TrailPoint p1 = trail.get(i);
 			TrailPoint p2 = trail.get(i + 1);
@@ -98,8 +141,15 @@ public class Frame extends JPanel implements ActionListener, MouseListener, KeyL
         }
 
 		g.setColor(Color.CYAN);
-	}
 
+
+
+		if(bombs.isEmpty() && fruits.isEmpty() && fruitRemnants.isEmpty()){
+			resetFruits();
+			resetBombs();
+			resetCharacters();
+		}
+	}
 	
 	public Frame(Driver driver) {
 		this.driver = driver;
@@ -117,7 +167,15 @@ public class Frame extends JPanel implements ActionListener, MouseListener, KeyL
 		setFocusable(true);
 		requestFocusInWindow(); 
 
-		
+		try (Scanner scanner = new Scanner(new File(highScoreFile))) {
+			while (scanner.hasNextLine()) {
+				highScore = Integer.parseInt(scanner.nextLine());
+			}
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
+
+
 		score = 0;
 		loc = MouseInfo.getPointerInfo().getLocation();
 
@@ -127,7 +185,7 @@ public class Frame extends JPanel implements ActionListener, MouseListener, KeyL
 		
 		resetFruits();
 		resetCharacters();
-		//resetBombs();
+		resetBombs();
 		
 		setCursor(Toolkit.getDefaultToolkit().createCustomCursor(
 				new ImageIcon("cursor.png").getImage().getScaledInstance(46, 40, Image.SCALE_DEFAULT),
@@ -137,6 +195,8 @@ public class Frame extends JPanel implements ActionListener, MouseListener, KeyL
 		t.start();
 		f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		f.setVisible(true);
+
+		
 	}
 	
 	@Override
@@ -202,13 +262,13 @@ public class Frame extends JPanel implements ActionListener, MouseListener, KeyL
 	public void keyPressed(KeyEvent arg0) {
 		int keyCode = arg0.getKeyCode();
 		if(keyCode == 82){
+			updateHighScore();
 			resetLives();
 			resetFruits();
 			resetBombs();
 			resetCharacters();
-		}else if(keyCode == 81){
-			bombs.clear();
-			killFruits();
+			score = 0;
+			livesLost = 0;
 		}
 		// 38 = up, 40 = down, 37 = left, 39 = right, 82 = r, 22 = q
 	}
@@ -231,7 +291,8 @@ public class Frame extends JPanel implements ActionListener, MouseListener, KeyL
 
 	public void resetFruits(){
 		fruits.clear();
-		for(int i = 1; i <= 1; i++){
+		int numFruits = random.nextInt(0, 5);
+		for(int i = 1; i <= numFruits; i++){
 			int x = random.nextInt(100, 1200);
 			int y = random.nextInt(800, 850);
 
@@ -244,7 +305,7 @@ public class Frame extends JPanel implements ActionListener, MouseListener, KeyL
 
 	public void resetCharacters(){
 		characters.clear();
-		for(int i = 0; i < 2; i++){
+		if(random.nextInt(0, 10) > 7){
 			int x = random.nextInt(100, 1200);
 			int y = random.nextInt(800, 850);
 
@@ -257,7 +318,8 @@ public class Frame extends JPanel implements ActionListener, MouseListener, KeyL
 
 	public void resetBombs(){
 		bombs.clear();
-		for(int i = 1; i <= 3; i++){
+		int numBombs = random.nextInt(0, 2);
+		for(int i = 1; i <= numBombs; i++){
 			int x = random.nextInt(100, 1200);
 			int y = random.nextInt(800, 850);
 
@@ -268,13 +330,21 @@ public class Frame extends JPanel implements ActionListener, MouseListener, KeyL
 	}
 
 	public void drawFruits(Graphics g){
-		for(Fruit fruit : fruits){
+		for(int i = 0; i < fruits.size(); i++){
+			Fruit fruit = fruits.get(i);
 			fruit.paint(g);
+			if(fruit.y >= 880){
+				livesLost ++;
+				lifeLost(fruit.x);
+				fruits.remove(i);
+			}
 		}
 
-		for(SplitFruit sf : fruitRemnants){
-			if(sf.getFrag1().y >= 1000 && sf.getFrag2().y >= 1000){
-				fruitRemnants.remove(sf);
+		for(int i = 0; i < fruitRemnants.size(); i++){
+			SplitFruit sf = fruitRemnants.get(i);
+			if(sf.getFrag1().y >= 900 && sf.getFrag2().y >= 900){
+				fruitRemnants.remove(i);
+				i--;
 				continue;
 			}
 			sf.paint(g);
@@ -296,14 +366,19 @@ public class Frame extends JPanel implements ActionListener, MouseListener, KeyL
 	}
 
 	public void drawBombs(Graphics g){
-		for(Bomb bomb : bombs){
+		for(int i = 0; i < bombs.size(); i++){
+			Bomb bomb = bombs.get(i);
 			bomb.paint(g);
+			if(bomb.y >= 900){
+				bombs.remove(i);
+				i--;
+			}
 		}
 	}
 
 	public void resetLives(){
 		for(Life life : lives){
-			life.update();
+			life.reset();
 		}
 	}
 
@@ -341,6 +416,19 @@ public class Frame extends JPanel implements ActionListener, MouseListener, KeyL
 					toRemoveChars.add(character);
 					score += 200;
 					break;
+				}
+			}
+		}
+
+		for(int b = 0; b < bombs.size(); b++){
+			for( int i = 0; i <= steps; i++){
+				float t = i / (float) steps;
+				float x = (float)(p1.x + t * (p2.x - p1.x));
+				float y = (float)(p1.y + t * (p2.y - p1.y));
+
+				Bomb bomb = bombs.get(b);
+				if(bomb.slice(x, y)){
+					livesLost = 10;
 				}
 			}
 		}
@@ -390,4 +478,38 @@ public class Frame extends JPanel implements ActionListener, MouseListener, KeyL
 		triangle2.addPoint(x2r, y2r);
 		g2.fillPolygon(triangle2);
 	}
+
+	private void lifeLost(int x){
+		if(livesLost > 3) return;
+		Life life = lives.get(livesLost - 1);
+		life.lifeLost();
+		lostLives.add(new Life(x, true));
+	}
+
+	private void drawLostLives(Graphics g){
+		if(lostLives.isEmpty()) return;
+		for(int i = 0; i < lostLives.size(); i++){
+			Life tempLife = lostLives.get(i);
+			if(tempLife.y >= 900){
+				lostLives.remove(i);
+				i--;
+				continue;
+			}
+			tempLife.paint(g);
+		}
+	}
+
+	private void updateHighScore() {
+	try {
+		if (score > highScore) {
+			highScore = score;
+			java.io.PrintWriter writer = new java.io.PrintWriter(new File(highScoreFile));
+			writer.println(highScore);
+			writer.close();
+		}
+	} catch (FileNotFoundException e) {
+		e.printStackTrace();
+	}
+}
+
 }
